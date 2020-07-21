@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t tylerauer/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true tylerauer/react-test npm test
+
+after_success:
+  - docker build -t tylerauer/multi-client ./client
+  - docker build -t tylerauer/multi-nginx ./nginx
+  - docker build -t tylerauer/multi-server ./server
+  - docker build -t tylerauer/multi-worker ./worker
+  # Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to docker hub
+  - docker push tylerauer/multi-client
+  - docker push tylerauer/multi-nginx
+  - docker push tylerauer/multi-server
+  - docker push tylerauer/multi-worker
